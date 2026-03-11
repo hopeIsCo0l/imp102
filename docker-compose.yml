@@ -1,6 +1,18 @@
 version: "3.9"
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: eaa_postgres
+    environment:
+      - POSTGRES_DB=eaa_recruit
+      - POSTGRES_USER=eaa_user
+      - POSTGRES_PASSWORD=eaa_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build: ./backend
     container_name: eaa_backend
@@ -13,6 +25,7 @@ services:
       - ./data/uploads:/app/uploads
       - ./data/exports:/app/exports
     depends_on:
+      - postgres
       - redis
 
   worker:
@@ -26,6 +39,7 @@ services:
       - ./data/uploads:/app/uploads
       - ./data/exports:/app/exports
     depends_on:
+      - postgres
       - redis
 
   frontend:
@@ -34,7 +48,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8000
     ports:
-      - "5173:5173"
+      - "18080:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -46,3 +60,6 @@ services:
     container_name: eaa_redis
     ports:
       - "6379:6379"
+
+volumes:
+  postgres_data:
