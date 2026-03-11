@@ -13,7 +13,7 @@ Full-stack prototype for AI-assisted recruitment with:
 2. Run with Docker:
    - `docker compose up --build`
 3. Open:
-   - Frontend: `http://localhost:5173`
+   - Frontend: `http://localhost:18080`
    - API docs: `http://localhost:8000/docs`
 
 ## 2) Default Roles
@@ -52,6 +52,6 @@ Use registration form to create users with one of:
 
 ## 5) Notes
 
-- Current persistence uses SQLite for speed in solo prototype mode.
+- Current persistence uses PostgreSQL via Docker Compose (`postgres` service).
 - Redis + Celery worker are included; CV parsing currently falls back to synchronous processing for deterministic local behavior.
 - OCR and PDF-native extraction can be extended in `backend/app/services/ai_pipeline.py`.
