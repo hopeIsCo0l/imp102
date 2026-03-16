@@ -47,7 +47,7 @@ jobs:
           from app.main import app
 
           client = TestClient(app)
-          response = client.get("/health")
+          response = client.get("/live")
           assert response.status_code == 200
           assert response.json().get("status") == "ok"
           print("Backend smoke test passed.")
