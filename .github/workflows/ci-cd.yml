@@ -15,6 +15,11 @@ jobs:
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
     defaults:
       run:
         working-directory: backend
@@ -47,10 +52,13 @@ jobs:
           from app.main import app
 
           client = TestClient(app)
-          response = client.get("/live")
-          assert response.status_code == 200
-          assert response.json().get("status") == "ok"
-          print("Backend smoke test passed.")
+          response = client.get("/health")
+          assert response.status_code == 200, f"expected 200, got {response.status_code}"
+          data = response.json()
+          assert data.get("status") == "ok", f"expected status ok, got {data}"
+          assert data.get("checks", {}).get("database", {}).get("ok") is True
+          assert data.get("checks", {}).get("redis", {}).get("ok") is True
+          print("Backend smoke test passed (DB + Redis OK).")
           PY
 
   frontend-ci:
