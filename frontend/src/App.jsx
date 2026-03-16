@@ -20,8 +20,7 @@ export default function App() {
       body: {
         email: fd.get("email"),
         full_name: fd.get("full_name"),
-        password: fd.get("password"),
-        role: fd.get("role")
+        password: fd.get("password")
       }
     });
     await login(e);
@@ -39,8 +38,16 @@ export default function App() {
       }
     });
     setToken(res.access_token);
+    setRole(res.user.role);
     localStorage.setItem("token", res.access_token);
-    localStorage.setItem("role", fd.get("role") || role);
+    localStorage.setItem("role", res.user.role);
+  }
+
+  async function loadCurrentUser() {
+    if (!token) return;
+    const user = await api("/auth/me", authHeaders);
+    setRole(user.role);
+    localStorage.setItem("role", user.role);
   }
 
   async function loadJobs() {
@@ -56,6 +63,7 @@ export default function App() {
   }
 
   useEffect(() => {
+    loadCurrentUser().catch((e) => setError(e.message));
     loadJobs().catch((e) => setError(e.message));
     loadApps().catch((e) => setError(e.message));
   }, [token]);
@@ -122,117 +130,144 @@ export default function App() {
     a.click();
   }
 
+  const isManager = role === "recruiter" || role === "admin";
+
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 900, margin: "2rem auto" }}>
-      <h1>EAA Recruit Prototype</h1>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+    <div className="app-shell">
+      <div className="app-bg-glow app-bg-glow-a" />
+      <div className="app-bg-glow app-bg-glow-b" />
+      <main className="container">
+        <header className="hero">
+          <p className="kicker">AI-assisted recruitment</p>
+          <h1>EAA Recruit</h1>
+          <p className="hero-subtitle">Screen candidates, run assessments, and export shortlists in one place.</p>
+        </header>
 
-      {!token && (
-        <>
-          <h2>Register</h2>
-          <form onSubmit={register}>
-            <input name="email" placeholder="Email" required />
-            <input name="full_name" placeholder="Full Name" required />
-            <input name="password" placeholder="Password" type="password" required />
-            <select
-              name="role"
-              onChange={(e) => {
-                setRole(e.target.value);
-                localStorage.setItem("role", e.target.value);
-              }}
-              value={role}
-            >
-              <option value="candidate">candidate</option>
-              <option value="recruiter">recruiter</option>
-              <option value="admin">admin</option>
-            </select>
-            <button type="submit">Register + Login</button>
-          </form>
-          <h2>Login</h2>
-          <form onSubmit={login}>
-            <input name="email" placeholder="Email" required />
-            <input name="password" placeholder="Password" type="password" required />
-            <input type="hidden" name="role" value={role} />
-            <button type="submit">Login</button>
-          </form>
-        </>
-      )}
+        {error && <div className="error-banner">{error}</div>}
 
-      {token && (
-        <>
-          <button
-            onClick={() => {
-              setToken("");
-              localStorage.removeItem("token");
-            }}
-          >
-            Logout
-          </button>
-          <p>Role: {role}</p>
-
-          {(role === "recruiter" || role === "admin") && (
-            <>
-              <h2>Create Job</h2>
-              <form onSubmit={createJob}>
-                <input name="title" placeholder="Title" required />
-                <input name="description" placeholder="Description" required />
-                <input name="required_skills" placeholder="Required skills csv" />
-                <input name="cv_weight" placeholder="CV weight" defaultValue="0.6" />
-                <input name="exam_weight" placeholder="Exam weight" defaultValue="0.4" />
-                <input name="deadline" placeholder="YYYY-MM-DD" required />
-                <button type="submit">Create</button>
+        {!token && (
+          <section className="grid grid-auth">
+            <article className="panel">
+              <h2>Create account</h2>
+              <p className="muted">Public signup creates a candidate account. Recruiter/admin accounts are admin-managed.</p>
+              <form className="form-grid" onSubmit={register}>
+                <input name="email" placeholder="Email" required />
+                <input name="full_name" placeholder="Full Name" required />
+                <input name="password" placeholder="Password" type="password" required />
+                <button type="submit">Register + Login</button>
               </form>
-            </>
-          )}
+            </article>
 
-          <h2>Jobs</h2>
-          {jobs.map((job) => (
-            <div key={job.id} style={{ border: "1px solid #ddd", padding: "0.75rem", marginBottom: "0.5rem" }}>
-              <strong>{job.title}</strong> ({job.status})<br />
-              <small>{job.description}</small>
-              <div style={{ marginTop: 8 }}>
-                {(role === "recruiter" || role === "admin") && job.status !== "PUBLISHED" && (
-                  <button onClick={() => publishJob(job.id)}>Publish</button>
-                )}
-                {(role === "recruiter" || role === "admin") && (
-                  <button onClick={() => exportShortlist(job.id)}>Export CSV</button>
-                )}
-                {role === "candidate" && job.status === "PUBLISHED" && (
-                  <input
-                    type="file"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) applyToJob(job.id, file).catch((er) => setError(er.message));
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
+            <article className="panel">
+              <h2>Sign in</h2>
+              <form className="form-grid" onSubmit={login}>
+                <input name="email" placeholder="Email" required />
+                <input name="password" placeholder="Password" type="password" required />
+                <button type="submit">Login</button>
+              </form>
+            </article>
+          </section>
+        )}
 
-          <h2>Applications</h2>
-          {apps.map((app) => (
-            <div key={app.id} style={{ borderBottom: "1px solid #ddd", padding: "0.5rem 0" }}>
-              App #{app.id} job:{app.job_id} status:{app.status} cv:{app.cv_score.toFixed(1)} exam:
-              {app.exam_score.toFixed(1)} final:{app.final_score.toFixed(1)}
+        {token && (
+          <>
+            <section className="topbar panel">
               <div>
-                {(role === "candidate" || role === "admin") && (
-                  <button onClick={() => submitExam(app.id)}>Submit Demo Exam</button>
-                )}
-                <button onClick={() => viewReport(app.id)}>View Report</button>
+                <p className="small-label">Signed in as</p>
+                <p className="role-pill">{role}</p>
               </div>
-            </div>
-          ))}
+              <button
+                className="ghost-btn"
+                onClick={() => {
+                  setToken("");
+                  localStorage.removeItem("token");
+                }}
+              >
+                Logout
+              </button>
+            </section>
 
-          {report && (
-            <>
-              <h2>Explainable Report</h2>
-              <p>{report.explanation_text}</p>
-              <p>Top skills: {report.top_skills}</p>
-            </>
-          )}
-        </>
-      )}
+            {isManager && (
+              <section className="panel">
+                <h2>Create Job</h2>
+                <form className="form-grid job-grid" onSubmit={createJob}>
+                  <input name="title" placeholder="Title" required />
+                  <input name="description" placeholder="Description" required />
+                  <input name="required_skills" placeholder="Required skills csv" />
+                  <input name="cv_weight" placeholder="CV weight" defaultValue="0.6" />
+                  <input name="exam_weight" placeholder="Exam weight" defaultValue="0.4" />
+                  <input name="deadline" placeholder="YYYY-MM-DD" required />
+                  <button type="submit">Create</button>
+                </form>
+              </section>
+            )}
+
+            <section className="panel">
+              <h2>Jobs</h2>
+              <div className="card-list">
+                {jobs.map((job) => (
+                  <article key={job.id} className="card">
+                    <div className="card-head">
+                      <strong>{job.title}</strong>
+                      <span className={`status status-${job.status.toLowerCase()}`}>{job.status}</span>
+                    </div>
+                    <p className="muted">{job.description}</p>
+                    <div className="action-row">
+                      {isManager && job.status !== "PUBLISHED" && (
+                        <button onClick={() => publishJob(job.id)}>Publish</button>
+                      )}
+                      {isManager && <button onClick={() => exportShortlist(job.id)}>Export CSV</button>}
+                      {role === "candidate" && job.status === "PUBLISHED" && (
+                        <input
+                          type="file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) applyToJob(job.id, file).catch((er) => setError(er.message));
+                          }}
+                        />
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="panel">
+              <h2>Applications</h2>
+              <div className="card-list">
+                {apps.map((app) => (
+                  <article key={app.id} className="card">
+                    <div className="card-head">
+                      <strong>
+                        App #{app.id} / Job #{app.job_id}
+                      </strong>
+                      <span className={`status status-${app.status.toLowerCase()}`}>{app.status}</span>
+                    </div>
+                    <p className="muted">
+                      CV {app.cv_score.toFixed(1)} | Exam {app.exam_score.toFixed(1)} | Final{" "}
+                      {app.final_score.toFixed(1)}
+                    </p>
+                    <div className="action-row">
+                      {(role === "candidate" || role === "admin") && (
+                        <button onClick={() => submitExam(app.id)}>Submit Demo Exam</button>
+                      )}
+                      <button onClick={() => viewReport(app.id)}>View Report</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            {report && (
+              <section className="panel report">
+                <h2>Explainable Report</h2>
+                <p>{report.explanation_text}</p>
+                <p className="muted">Top skills: {report.top_skills}</p>
+              </section>
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }
