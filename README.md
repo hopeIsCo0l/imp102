@@ -72,6 +72,9 @@ Use registration form to create users with one of:
 - `POST /exams/{application_id}/submit`
 - `GET /admin/users`
 - `GET /admin/audits`
+- `GET /live` (liveness)
+- `GET /health` (readiness: DB + Redis)
+- `GET /ready` (readiness alias)
 
 ## 5) Notes
 

@@ -1,10 +1,12 @@
 from pathlib import Path
 from time import time
 
+import redis
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.config import settings
 from app.database import Base, engine
@@ -49,6 +51,57 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+def _db_ready() -> tuple[bool, str]:
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True, "ok"
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _redis_ready() -> tuple[bool, str]:
+    client = redis.Redis.from_url(
+        settings.redis_url,
+        socket_connect_timeout=2,
+        socket_timeout=2,
+    )
+    try:
+        if client.ping():
+            return True, "ok"
+        return False, "ping failed"
+    except Exception as exc:
+        return False, str(exc)
+    finally:
+        client.close()
+
+
+def _readiness_payload() -> tuple[dict, int]:
+    db_ok, db_detail = _db_ready()
+    redis_ok, redis_detail = _redis_ready()
+    ready = db_ok and redis_ok
+    payload = {
+        "status": "ok" if ready else "degraded",
+        "checks": {
+            "database": {"ok": db_ok, "detail": db_detail},
+            "redis": {"ok": redis_ok, "detail": redis_detail},
+        },
+    }
+    return payload, 200 if ready else 503
+
+
+@app.get("/live")
+def live():
+    return {"status": "ok"}
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    payload, status_code = _readiness_payload()
+    return JSONResponse(status_code=status_code, content=payload)
+
+
+@app.get("/ready")
+def ready():
+    payload, status_code = _readiness_payload()
+    return JSONResponse(status_code=status_code, content=payload)
