@@ -9,8 +9,14 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     upload_dir: str = "uploads"
     export_dir: str = "exports"
+    cors_allow_origins: str = "http://localhost:28080,http://localhost:5173"
+    cors_allow_origin_regex: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @property
+    def cors_allow_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
 
 
 settings = Settings()

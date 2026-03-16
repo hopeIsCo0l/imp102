@@ -25,6 +25,20 @@ Set host ports in `.env` (defaults shown):
 
 The frontend API URL in Docker is derived from `HOST_BACKEND_PORT`.
 
+### CORS configuration
+
+The API CORS policy is environment-driven via `.env`:
+- `CORS_ALLOW_ORIGINS` (comma-separated origins)
+- `CORS_ALLOW_ORIGIN_REGEX` (optional regex for preview domains)
+
+Examples:
+- Local dev:
+  - `CORS_ALLOW_ORIGINS=http://localhost:28080,http://localhost:5173`
+  - `CORS_ALLOW_ORIGIN_REGEX=`
+- Staging/production:
+  - `CORS_ALLOW_ORIGINS=https://staging.example.com,https://app.example.com`
+  - `CORS_ALLOW_ORIGIN_REGEX=^https://.*\.preview\.example\.com$`
+
 ## 2) Default Roles
 
 Use registration form to create users with one of:
