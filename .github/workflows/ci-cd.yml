@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["**"]
   push:
-    branches: ["main", "postgres-migration"]
+    branches: ["main", "postgres-migration", "Standardaiz"]
   workflow_dispatch:
 
 concurrency:
