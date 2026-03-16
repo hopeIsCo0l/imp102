@@ -13,28 +13,24 @@ Full-stack prototype for AI-assisted recruitment with:
 2. Run with Docker:
    - `docker compose up --build`
 3. Open:
-   - Frontend: `http://localhost:18080`
-   - API docs: `http://localhost:8000/docs`
+   - Frontend: `http://localhost:28080`
+   - API docs: `http://localhost:18000/docs`
 
-## 2) Role Provisioning
+### Port configuration (Docker)
 
-- Public signup (`POST /auth/register`) always creates `candidate` accounts.
-- `recruiter` and `admin` accounts are never self-registered.
-- Recruiter/admin creation is admin-managed through protected APIs.
-- First admin is created with a one-time bootstrap command.
+Set host ports in `.env` (defaults shown):
+- `HOST_FRONTEND_PORT=28080`
+- `HOST_BACKEND_PORT=18000`
+- `HOST_POSTGRES_PORT=25433`
 
-### Bootstrap initial admin
+The frontend API URL in Docker is derived from `HOST_BACKEND_PORT`.
 
-1. Set these values in `.env`:
-   - `BOOTSTRAP_ADMIN_EMAIL`
-   - `BOOTSTRAP_ADMIN_PASSWORD`
-   - optional: `BOOTSTRAP_ADMIN_FULL_NAME`
-2. Run once:
-   - `docker compose exec backend python -m app.bootstrap_admin`
-   - or locally from `backend/`: `python -m app.bootstrap_admin`
-3. Expected behavior:
-   - Creates an admin only if no admin exists.
-   - Skips safely if an admin already exists.
+## 2) Default Roles
+
+Use registration form to create users with one of:
+- `candidate`
+- `recruiter`
+- `admin`
 
 ## 3) Core Flows Implemented
 
@@ -50,7 +46,6 @@ Full-stack prototype for AI-assisted recruitment with:
 ## 4) API Endpoints (Key)
 
 - `POST /auth/register`
-- `POST /auth/users` (admin only)
 - `POST /auth/login`
 - `POST /jobs`
 - `POST /jobs/{job_id}/publish`

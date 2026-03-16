@@ -9,9 +9,6 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     upload_dir: str = "uploads"
     export_dir: str = "exports"
-    bootstrap_admin_email: str | None = None
-    bootstrap_admin_password: str | None = None
-    bootstrap_admin_full_name: str = "Initial Admin"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
