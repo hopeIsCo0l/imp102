@@ -13,8 +13,17 @@ Full-stack prototype for AI-assisted recruitment with:
 2. Run with Docker:
    - `docker compose up --build`
 3. Open:
-   - Frontend: `http://localhost:18080`
-   - API docs: `http://localhost:8000/docs`
+   - Frontend: `http://localhost:28080`
+   - API docs: `http://localhost:18000/docs`
+
+### Port configuration (Docker)
+
+Set host ports in `.env` (defaults shown):
+- `HOST_FRONTEND_PORT=28080`
+- `HOST_BACKEND_PORT=18000`
+- `HOST_POSTGRES_PORT=25433`
+
+The frontend API URL in Docker is derived from `HOST_BACKEND_PORT`.
 
 ## 2) Default Roles
 

@@ -9,7 +9,7 @@ services:
       - POSTGRES_USER=eaa_user
       - POSTGRES_PASSWORD=eaa_pass
     ports:
-      - "25433:5432"
+      - "${HOST_POSTGRES_PORT:-25433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     ports:
-      - "18000:8000"
+      - "${HOST_BACKEND_PORT:-18000}:8000"
     volumes:
       - ./backend:/app
       - ./data/uploads:/app/uploads
@@ -46,9 +46,9 @@ services:
     build: ./frontend
     container_name: eaa_frontend
     environment:
-      - VITE_API_URL=http://localhost:18000
+      - VITE_API_URL=http://localhost:${HOST_BACKEND_PORT:-18000}
     ports:
-      - "28080:5173"
+      - "${HOST_FRONTEND_PORT:-28080}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
