@@ -16,12 +16,25 @@ Full-stack prototype for AI-assisted recruitment with:
    - Frontend: `http://localhost:18080`
    - API docs: `http://localhost:8000/docs`
 
-## 2) Default Roles
+## 2) Role Provisioning
 
-Use registration form to create users with one of:
-- `candidate`
-- `recruiter`
-- `admin`
+- Public signup (`POST /auth/register`) always creates `candidate` accounts.
+- `recruiter` and `admin` accounts are never self-registered.
+- Recruiter/admin creation is admin-managed through protected APIs.
+- First admin is created with a one-time bootstrap command.
+
+### Bootstrap initial admin
+
+1. Set these values in `.env`:
+   - `BOOTSTRAP_ADMIN_EMAIL`
+   - `BOOTSTRAP_ADMIN_PASSWORD`
+   - optional: `BOOTSTRAP_ADMIN_FULL_NAME`
+2. Run once:
+   - `docker compose exec backend python -m app.bootstrap_admin`
+   - or locally from `backend/`: `python -m app.bootstrap_admin`
+3. Expected behavior:
+   - Creates an admin only if no admin exists.
+   - Skips safely if an admin already exists.
 
 ## 3) Core Flows Implemented
 
@@ -37,6 +50,7 @@ Use registration form to create users with one of:
 ## 4) API Endpoints (Key)
 
 - `POST /auth/register`
+- `POST /auth/users` (admin only)
 - `POST /auth/login`
 - `POST /jobs`
 - `POST /jobs/{job_id}/publish`
